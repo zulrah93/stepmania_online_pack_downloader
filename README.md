@@ -10,13 +10,13 @@ Tested on Windows, hasnt' been tested on Linux. But ideally any platform that ca
 # Installation From Terminal (Windows) ⚠️ Understand Risk And Always Read The Script Before Installing ⚠️
 
 ```
-72; iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/zulrah93/groovestats_pack_downloader/master/install.ps1'))
+72; iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/zulrah93/stepmania_online_pack_downloader/master/install.ps1'))
 ```
 
 # Installation From Terminal (Linux)
 
 ```
-sh -c "$(curl -fsSL https://github.com/zulrah93/groovestats_pack_downloader/blob/master/install.sh)"
+sh -c "$(curl -fsSL https://github.com/zulrah93/stepmania_online_pack_downloader/blob/master/install.sh)"
 ```
 
 # How to Build From Source (Windows)
@@ -34,4 +34,4 @@ sh -c "$(curl -fsSL https://github.com/zulrah93/groovestats_pack_downloader/blob
 
 # Sample Output
 
-![Sample Output](https://github.com/zulrah93/groovestats_pack_downloader/blob/master/sample_output.png)
+![Sample Output](https://github.com/zulrah93/stepmania_online_pack_downloader/blob/master/sample_output.png)
