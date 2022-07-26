@@ -1,0 +1,18 @@
+[package]
+name = "stepmania_online_pack_downloader"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+reqwest = { version = "0.11.10", features = ["blocking"] } # Download HTML and pack resources off stepmania online repo
+scraper = "0.13.0" # Used to extract pack list from groovestats
+clap = { version = "3.1.10", features = ["cargo"] } # Command line flags so that the tool looks cool to the power users out there
+zip = "0.6.2" # Required by zip-extensions
+colored = "2.0.0" # To color code terminal output not necessary and mainly to make the program attractive to power users; if this dependency is removed you will have to remove the calls to the color on every print
+urlencoding = "2.1.0" # Used to ensure song pack name conforms the URI standard
+zip-extensions = "0.6.1" # To extract the zip files which the pack repo uses
+filesize = "0.2.0" # Used to get the directory size of extracted packs
+num_cpus = "1.13.1" # Since Rust has no native API call to get the system's core count
+
