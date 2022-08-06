@@ -26,7 +26,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 /*⚠️ Always set higher and never change below 100 or you may take down a resource server accidently. ⚠️*/
-static MINIMUM_TIMEOUT: u64 = 100; // Used as a delay not to be confused with HTTP timeout although this constant maybe renamed to avoid confusion with the term used by TCP sockets
+static MINIMUM_TIMEOUT: usize = 100; // Used as a delay not to be confused with HTTP timeout although this constant maybe renamed to avoid confusion with the term used by TCP sockets
 
 // To avoid having to type the tuple everywhere -- Rust has a very strict type system
 type RGB = (u8, u8, u8);
@@ -36,8 +36,10 @@ static ERROR_RGB: RGB = (255, 0, 0);
 static OK_RGB: RGB = (245, 66, 155);
 static FINISHED_RGB: RGB = (0, 255, 0);
 
-// Maximum id to attempt TODO: Will change this to be part of a configuration file
-static MAX_ID: u32 = 300000;
+// Maximum id to attempt
+static MAX_ID: usize = 300000;
+// Minimum id to attempt
+static MIN_ID: usize = 5000;
 
 fn debug() -> bool {
     cfg!(debug_assertions)
@@ -85,11 +87,11 @@ impl CommandOptions {
         minimum_id: u32,
         maximum_id: u32,
     ) -> Self {
-        let timeout = if timeout_per_download < MINIMUM_TIMEOUT {
+        let timeout = if timeout_per_download < (MINIMUM_TIMEOUT as u64) {
             // Ensure we don't crash the server by respecting the server owner's precious resources
-            MINIMUM_TIMEOUT
+            MINIMUM_TIMEOUT as u64
         } else {
-            timeout_per_download
+            timeout_per_download as u64
         };
         CommandOptions {
             timeout_per_download: timeout,
@@ -112,10 +114,10 @@ impl CommandOptions {
 
 impl Default for CommandOptions {
     fn default() -> Self {
-        CommandOptions::new(MINIMUM_TIMEOUT, String::from(""), 1, MAX_ID)
+        CommandOptions::new(MINIMUM_TIMEOUT as u64, String::from(""), 1, MAX_ID as u32)
     }
 }
-#[allow(dead_code)]
+
 fn stepmania_default_path() -> String {
     // ⚠️ This assumes stepmania -- if you use a fork or derivative of stepmania feel free to change the defaults per platform
     if cfg!(windows) {
@@ -144,21 +146,47 @@ fn get_command_options() -> CommandOptions {
     .arg(arg!(
         -p --pack_download_path <PATH> ... "Where the Stepmania packs extracted will be placed."
     ).required(false))
+    .arg(arg!(
+        -m --minimum_id <ID> "Time out in milliseconds to avoid taking down StepmaniaOnline servers"
+    ).required(false))
+    .arg(arg!(
+        -M --maximum_id <ID> ... "Where the Stepmania packs extracted will be placed."
+    ).required(false))
     .get_matches();
-    let _timeout = if matches.is_present("timeout") {
+    let timeout = if matches.is_present("timeout") {
         matches.get_many::<usize>("timeout").unwrap().next()
     } else {
         None
     };
-    let _download_path = if matches.is_present("pack_download_path") {
+    let download_path = if matches.is_present("pack_download_path") {
         matches
-            .get_many::<&str>("pack_download_path")
+            .get_many::<String>("pack_download_path")
             .unwrap()
             .next()
     } else {
         None
     };
-    CommandOptions::default() // TODO: Parse command line arguments
+    let minimum_id = if matches.is_present("minimum_id") {
+        matches
+            .value_of("minimum_id")
+            .map(|s| s.parse::<u32>().unwrap_or_default())
+    } else {
+        None
+    };
+    let maximum_id = if matches.is_present("maximum_id") {
+        matches
+            .value_of("maximum_id")
+            .map(|s| s.parse::<u32>().unwrap_or_default())
+    } else {
+        None
+    };
+
+    CommandOptions::new(
+        *timeout.unwrap_or(&MINIMUM_TIMEOUT) as u64,
+        download_path.unwrap_or(&stepmania_default_path()).clone(),
+        minimum_id.unwrap_or(MIN_ID as u32),
+        maximum_id.unwrap_or(MAX_ID as u32),
+    )
 }
 
 //Called when the downloaded pack resource has invalid bytes to avoid extracting a corrupted song pack
@@ -232,7 +260,7 @@ fn attempt_stepmania_online_pack_download_by(args: &CommandOptions, id: u32) -> 
     }
     let endpoint = format!("https://search.stepmaniaonline.net/pack/id/{}", id);
     let found_pack = format!("Attempting to Find a Pack @ {}", endpoint);
-    debug_println(&found_pack);
+    colored_println(found_pack, FINISHED_RGB);
     if let Ok(response) = reqwest::blocking::get(endpoint) {
         let html_text = response.text().unwrap_or_default();
         let html = Html::parse_document(html_text.as_str());
